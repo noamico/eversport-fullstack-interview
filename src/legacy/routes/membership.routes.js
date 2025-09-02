@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 const memberships = require('../../data/memberships.json');
 const membershipPeriods = require('../../data/membership-periods.json');
@@ -7,41 +7,49 @@ const { v4: uuidv4 } = require('uuid');
 /**
  * create a new membership
  */
-router.post("/", (req, res) => {
+router.post('/', (req, res) => {
   const userId = 2000;
 
   if (!req.body.name || !req.body.recurringPrice) {
-    return res.status(400).json({ message: "missingMandatoryFields" });
+    return res.status(400).json({ message: 'missingMandatoryFields' });
   }
 
   if (req.body.recurringPrice < 0) {
-    return res.status(400).json({ message: "negativeRecurringPrice" });
+    return res.status(400).json({ message: 'negativeRecurringPrice' });
   }
 
   if (req.body.recurringPrice > 100 && req.body.paymentMethod === 'cash') {
-    return res.status(400).json({ message: "cashPriceBelow100" });
+    return res.status(400).json({ message: 'cashPriceBelow100' });
   }
 
   if (req.body.billingInterval === 'monthly') {
     if (req.body.billingPeriods > 12) {
-      return res.status(400).json({ message: "billingPeriodsMoreThan12Months" });
+      return res
+        .status(400)
+        .json({ message: 'billingPeriodsMoreThan12Months' });
     }
     if (req.billingPeriods < 6) {
-      return res.status(400).json({ message: "billingPeriodsLessThan6Months" });
+      return res.status(400).json({ message: 'billingPeriodsLessThan6Months' });
     }
   } else if (req.body.billingInterval === 'yearly') {
     if (req.body.billingPeriods > 3) {
       if (req.body.billingPeriods > 10) {
-        return res.status(400).json({ message: "billingPeriodsMoreThan10Years" });
+        return res
+          .status(400)
+          .json({ message: 'billingPeriodsMoreThan10Years' });
       } else {
-        return res.status(400).json({ message: "billingPeriodsLessThan3Years" });
+        return res
+          .status(400)
+          .json({ message: 'billingPeriodsLessThan3Years' });
       }
     }
   } else {
-    return res.status(400).json({ message: "invalidBillingPeriods" });
+    return res.status(400).json({ message: 'invalidBillingPeriods' });
   }
 
-  const validFrom = req.body.validFrom ? new Date(req.body.validFrom) : new Date()
+  const validFrom = req.body.validFrom
+    ? new Date(req.body.validFrom)
+    : new Date();
   const validUntil = new Date(validFrom);
   if (req.body.billingInterval === 'monthly') {
     validUntil.setMonth(validFrom.getMonth() + req.body.billingPeriods);
@@ -51,12 +59,12 @@ router.post("/", (req, res) => {
     validUntil.setDate(validFrom.getDate() + req.body.billingPeriods * 7);
   }
 
-  let state = 'active'
+  let state = 'active';
   if (validFrom > new Date()) {
-    state = 'pending'
+    state = 'pending';
   }
   if (validUntil < new Date()) {
-    state = 'expired'
+    state = 'expired';
   }
 
   const newMembership = {
@@ -74,11 +82,11 @@ router.post("/", (req, res) => {
   };
   memberships.push(newMembership);
 
-  const membershipPeriods = []
-  let periodStart = validFrom
+  const membershipPeriods = [];
+  let periodStart = validFrom;
   for (let i = 0; i < req.body.billingPeriods; i++) {
-    const validFrom = periodStart
-    const validUntil = new Date(validFrom)
+    const validFrom = periodStart;
+    const validUntil = new Date(validFrom);
     if (req.body.billingInterval === 'monthly') {
       validUntil.setMonth(validFrom.getMonth() + 1);
     } else if (req.body.billingInterval === 'yearly') {
@@ -92,25 +100,27 @@ router.post("/", (req, res) => {
       membershipId: newMembership.id,
       start: validFrom,
       end: validUntil,
-      state: 'planned'
-    }
-    membershipPeriods.push(period)
-    periodStart = validUntil
+      state: 'planned',
+    };
+    membershipPeriods.push(period);
+    periodStart = validUntil;
   }
 
   res.status(201).json({ membership: newMembership, membershipPeriods });
-})
+});
 
 /**
  * List all memberships
  */
-router.get("/", (req, res) => {
-  const rows = []
+router.get('/', (req, res) => {
+  const rows = [];
   for (const membership of memberships) {
-    const periods = membershipPeriods.filter(p => p.membershipId === membership.id)
-    rows.push({ membership, periods })
+    const periods = membershipPeriods.filter(
+      (p) => p.membershipId === membership.id,
+    );
+    rows.push({ membership, periods });
   }
   res.status(200).json(rows);
-})
+});
 
-module.exports = router
+module.exports = router;
