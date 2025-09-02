@@ -65,14 +65,16 @@ export class MembershipController {
     ) {
       throw new BadRequestException('cashPriceBelow100');
     }
-    if (membership.billingInterval === 'monthly') {
+    if (membership.billingInterval === MembershipBillingInterval.MONTHLY) {
       if (membership.billingPeriods > 12) {
         throw new BadRequestException('billingPeriodsMoreThan12Months');
       }
       if (membership.billingPeriods < 6) {
         throw new BadRequestException('billingPeriodsLessThan6Months');
       }
-    } else if (membership.billingInterval === 'yearly') {
+    } else if (
+      membership.billingInterval === MembershipBillingInterval.YEARLY
+    ) {
       if (membership.billingPeriods > 3) {
         if (membership.billingPeriods > 10) {
           throw new BadRequestException('billingPeriodsMoreThan10Years');
