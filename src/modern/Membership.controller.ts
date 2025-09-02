@@ -90,13 +90,17 @@ export class MembershipController {
       ? new Date(membership.validFrom)
       : new Date();
     const validUntil = new Date(validFrom);
-    if (membership.billingInterval === 'monthly') {
+    if (membership.billingInterval === MembershipBillingInterval.MONTHLY) {
       validUntil.setMonth(validFrom.getMonth() + membership.billingPeriods);
-    } else if (membership.billingInterval === 'yearly') {
+    } else if (
+      membership.billingInterval === MembershipBillingInterval.YEARLY
+    ) {
       validUntil.setMonth(
         validFrom.getMonth() + membership.billingPeriods * 12,
       );
-    } else if (membership.billingInterval === 'weekly') {
+    } else if (
+      membership.billingInterval === MembershipBillingInterval.WEEKLY
+    ) {
       validUntil.setDate(validFrom.getDate() + membership.billingPeriods * 7);
     }
     return { validFrom, validUntil };
