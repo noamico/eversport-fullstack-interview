@@ -18,13 +18,21 @@ export enum MembershipBillingInterval {
 }
 
 export type Membership = {
+  id: number;
+  uuid: string;
   name: string;
   userId: number;
   recurringPrice: number;
-  validFrom: Date;
-  validUntil: Date;
+  validFrom: string;
+  validUntil: string;
   state: MembershipState;
   paymentMethod?: MembershipPaymentMethod;
   billingInterval: MembershipBillingInterval;
   billingPeriods: number;
+  assignedBy: string;
 };
+
+export type MembershipRequest = Omit<
+  Membership,
+  'id' | 'uuid' | 'validUntil' | 'state'
+>;
