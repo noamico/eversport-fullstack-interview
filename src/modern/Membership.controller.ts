@@ -11,51 +11,39 @@ import {
   MembershipBillingInterval,
   MembershipPaymentMethod,
   MembershipRequest,
-  MembershipState,
 } from '../types/Membership';
-import {
-  MembershipPeriod,
-  MembershipPeriodState,
-} from '../types/MembershipPeriod';
-import membershipsData from '../data/memberships.json';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { v4: uuidv4 } = require('uuid');
+import { MembershipPeriod } from '../types/MembershipPeriod';
+import { MembershipService } from './Membership.service';
 
-const memberships: Membership[] = membershipsData as Membership[];
+export type postResponse = {
+  membership: Membership;
+  membershipPeriods: MembershipPeriod[];
+};
+
+export type getResponse = {
+  membership: Membership;
+  periods: MembershipPeriod[];
+}[];
+
+//TODO: better if the types would be the same (same name for "membershipPeriods" / "periods"),
+// but it has to be exactly the same as the legacy
 
 @Controller('membership')
 export class MembershipController {
+  constructor(private readonly membershipService: MembershipService) {}
+
   @Post('/')
   async createNewMembership(
     @Body(new ValidationPipe()) membershipToCreate: MembershipRequest,
-  ): Promise<{
-    membership: Membership;
-    membershipPeriods: MembershipPeriod[];
-  }> {
+  ): Promise<postResponse> {
     this.validateMembershipData(membershipToCreate);
 
-    const { validFrom, validUntil } =
-      this.getValidationInterval(membershipToCreate);
-    const newMembership = this.createNewMembershipObj(
-      membershipToCreate,
-      validFrom,
-      validUntil,
-    );
-
-    // instead of saving in DB
-    memberships.push(newMembership);
-
-    const membershipPeriods = this.getNewMembershipPeriods(
-      newMembership,
-      validFrom,
-    );
-
-    return { membership: newMembership, membershipPeriods };
+    return await this.membershipService.addMembership(membershipToCreate);
   }
 
   @Get('/')
-  async getMemberships(): Promise<Membership[]> {
-    return memberships;
+  async getMemberships(): Promise<getResponse> {
+    return await this.membershipService.getAllMemberships();
   }
 
   private validateMembershipData(membership: MembershipRequest) {
@@ -85,89 +73,5 @@ export class MembershipController {
     } else {
       throw new BadRequestException('invalidBillingPeriods');
     }
-  }
-
-  private getValidationInterval(membership: MembershipRequest) {
-    const validFrom = membership.validFrom
-      ? new Date(membership.validFrom)
-      : new Date();
-    const validUntil = new Date(validFrom);
-    if (membership.billingInterval === MembershipBillingInterval.MONTHLY) {
-      validUntil.setMonth(validFrom.getMonth() + membership.billingPeriods);
-    } else if (
-      membership.billingInterval === MembershipBillingInterval.YEARLY
-    ) {
-      validUntil.setMonth(
-        validFrom.getMonth() + membership.billingPeriods * 12,
-      );
-    } else if (
-      membership.billingInterval === MembershipBillingInterval.WEEKLY
-    ) {
-      validUntil.setDate(validFrom.getDate() + membership.billingPeriods * 7);
-    }
-    return { validFrom, validUntil };
-  }
-
-  private createNewMembershipObj(
-    membershipToCreate: MembershipRequest,
-    validFrom: Date,
-    validUntil: Date,
-  ) {
-    let state: MembershipState = MembershipState.ACTIVE;
-    if (validFrom > new Date()) {
-      state = MembershipState.PENDING;
-    }
-    if (validUntil < new Date()) {
-      state = MembershipState.EXPIRED;
-    }
-
-    return {
-      id: memberships.length + 1,
-      uuid: uuidv4() as string,
-      name: membershipToCreate.name,
-      state,
-      validFrom: validFrom.toISOString(),
-      validUntil: validUntil.toISOString(),
-      userId: membershipToCreate.userId,
-      paymentMethod: membershipToCreate.paymentMethod,
-      recurringPrice: membershipToCreate.recurringPrice,
-      billingPeriods: membershipToCreate.billingPeriods,
-      billingInterval: membershipToCreate.billingInterval,
-      assignedBy: membershipToCreate.assignedBy,
-    };
-  }
-
-  private getNewMembershipPeriods(
-    newMembership: Membership,
-    validFrom: Date,
-  ): MembershipPeriod[] {
-    const membershipPeriods = [];
-    let periodStart = validFrom;
-    for (let i = 0; i < newMembership.billingPeriods; i++) {
-      const validFrom = periodStart;
-      const validUntil = new Date(validFrom);
-      if (newMembership.billingInterval === MembershipBillingInterval.MONTHLY) {
-        validUntil.setMonth(validFrom.getMonth() + 1);
-      } else if (
-        newMembership.billingInterval === MembershipBillingInterval.YEARLY
-      ) {
-        validUntil.setMonth(validFrom.getMonth() + 12);
-      } else if (
-        newMembership.billingInterval === MembershipBillingInterval.WEEKLY
-      ) {
-        validUntil.setDate(validFrom.getDate() + 7);
-      }
-      const period = {
-        id: i + 1,
-        uuid: uuidv4(),
-        membershipId: newMembership.id,
-        start: validFrom,
-        end: validUntil,
-        state: MembershipPeriodState.PLANNED,
-      };
-      membershipPeriods.push(period);
-      periodStart = validUntil;
-    }
-    return membershipPeriods;
   }
 }
