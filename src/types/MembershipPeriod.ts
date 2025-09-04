@@ -6,8 +6,8 @@ export enum MembershipPeriodState {
 export type MembershipPeriod = {
   id: number;
   uuid: string;
-  membershipId: number;
-  start: Date;
-  end: Date;
+  membership: number;
+  start: string; // Date;
+  end: string; //Date;
   state: MembershipPeriodState;
 };

@@ -7,6 +7,7 @@ const legacyMembershipRoutes = require('./legacy/routes/membership.routes');
 
 import { NestFactory } from '@nestjs/core';
 import { MembershipModule } from './modern/Membership.module';
+import { GlobalExceptionFilter } from './global-exception.filter';
 
 // const app = express()
 const port = 3099;
@@ -21,7 +22,8 @@ const port = 3099;
 // })
 
 (async () => {
-  const http = await NestFactory.create(MembershipModule);
-  await http.listen(port);
-  return () => http.close();
+  const app = await NestFactory.create(MembershipModule);
+  app.useGlobalFilters(new GlobalExceptionFilter());
+  await app.listen(port);
+  return () => app.close();
 })();
