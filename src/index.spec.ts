@@ -81,6 +81,9 @@ describe('ComponentTests', () => {
     expect(modernDataWithoutIds).toEqual(legacyDataWithoutIds);
     expect(modernResult.status).toEqual(201);
     expect(modernResultData.membershipPeriods.length).toEqual(9);
+    expect(modernDataWithoutIds.membershipPeriods).toEqual(
+      legacyDataWithoutIds.membershipPeriods,
+    );
     expect(modernResultData.membership.state).toEqual(MembershipState.ACTIVE);
     expect(legacyResultData.membership.name).toEqual('Test New Membership');
     expect(

@@ -132,37 +132,49 @@ export class MembershipService implements OnModuleInit {
     };
   }
 
+  private getNewPeriodIntervalItem(
+    initialDate: Date,
+    periodIndex: number,
+    billingInterval: MembershipBillingInterval,
+  ) {
+    if (periodIndex === 0) return initialDate;
+    const intervalItem = new Date(initialDate); //new Date(validFrom);
+    const intervalMap = {
+      [MembershipBillingInterval.MONTHLY]: () =>
+        intervalItem.setMonth(intervalItem.getMonth() + periodIndex),
+      [MembershipBillingInterval.YEARLY]: () =>
+        intervalItem.setMonth(intervalItem.getMonth() + periodIndex * 12),
+      [MembershipBillingInterval.WEEKLY]: () =>
+        intervalItem.setDate(intervalItem.getDate() + periodIndex * 7),
+    };
+    intervalMap[billingInterval]();
+    return intervalItem;
+  }
+
   private getNewMembershipPeriods(
     newMembership: Membership,
     validFrom: Date,
   ): MembershipPeriod[] {
-    const membershipPeriods = [];
-    let periodStart = validFrom;
-    for (let i = 0; i < newMembership.billingPeriods; i++) {
-      const validFrom = periodStart;
-      const validUntil = new Date(validFrom);
-      if (newMembership.billingInterval === MembershipBillingInterval.MONTHLY) {
-        validUntil.setMonth(validFrom.getMonth() + 1);
-      } else if (
-        newMembership.billingInterval === MembershipBillingInterval.YEARLY
-      ) {
-        validUntil.setMonth(validFrom.getMonth() + 12);
-      } else if (
-        newMembership.billingInterval === MembershipBillingInterval.WEEKLY
-      ) {
-        validUntil.setDate(validFrom.getDate() + 7);
-      }
-      const period = {
-        id: i + 1,
+    return Array.from({ length: newMembership.billingPeriods }, (_, index) => {
+      const periodStart = this.getNewPeriodIntervalItem(
+        validFrom,
+        index,
+        newMembership.billingInterval,
+      );
+      const periodEnd = this.getNewPeriodIntervalItem(
+        periodStart,
+        1,
+        newMembership.billingInterval,
+      );
+
+      return {
+        id: index + 1,
         uuid: uuidv4(),
         membership: newMembership.id,
-        start: validFrom.toISOString(),
-        end: validUntil.toISOString(),
+        start: periodStart.toISOString(),
+        end: periodEnd.toISOString(),
         state: MembershipPeriodState.PLANNED,
       };
-      membershipPeriods.push(period);
-      periodStart = validUntil;
-    }
-    return membershipPeriods;
+    });
   }
 }
