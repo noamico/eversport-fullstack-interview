@@ -7,7 +7,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import {
-  getResponse,
+  GetResponse,
   MembershipBillingInterval,
   MembershipPaymentMethod,
   MembershipRequest,
@@ -29,7 +29,7 @@ export class MembershipController {
   }
 
   @Get()
-  async getMemberships(): Promise<getResponse> {
+  async getMemberships(): Promise<GetResponse> {
     return await this.membershipService.getAllMemberships();
   }
 

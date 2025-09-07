@@ -46,7 +46,7 @@ export type PostResponse = {
   membershipPeriods: MembershipPeriod[];
 };
 
-export type getResponse = {
+export type GetResponse = {
   membership: Membership;
   periods: MembershipPeriod[];
 }[];

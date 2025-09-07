@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import axios from 'axios';
 import {
-  Membership,
+  GetResponse,
   MembershipBillingInterval,
   MembershipPaymentMethod,
   MembershipRequest,
@@ -138,6 +138,46 @@ describe('ComponentTests', () => {
     );
     expect(modernResponse.status).toBe(400);
     expect(modernResponse.response.data.message).toEqual('cashPriceBelow100');
+  });
+
+  test('get memberships', async () => {
+    // arrange
+
+    // act
+    const legacyResult = await axios({
+      method: 'get',
+      url: `http://localhost:${process.env.PORT}/legacy/memberships`,
+    });
+
+    const modernResult = await axios({
+      method: 'get',
+      url: `http://localhost:${process.env.PORT}/memberships`,
+    });
+
+    const modernResultData: GetResponse = modernResult.data;
+    const legacyResultData: GetResponse = legacyResult.data;
+
+    const modernDataWithoutIds = modernResultData.map((item) => {
+      return {
+        membership: omitFields(item.membership, ['id', 'uuid']),
+        periods: item.periods.map((period: any) =>
+          omitFields(period, ['id', 'uuid', 'membership']),
+        ),
+      };
+    });
+
+    const legacyDataWithoutIds = legacyResultData.map((item) => {
+      return {
+        membership: omitFields(item.membership, ['id', 'uuid']),
+        periods: item.periods.map((period: any) =>
+          omitFields(period, ['id', 'uuid', 'membership']),
+        ),
+      };
+    });
+
+    // assert
+    expect(modernDataWithoutIds).toEqual(legacyDataWithoutIds);
+    expect(modernResult.status).toEqual(200);
   });
 
   function omitFields<T>(obj: T, fields: (keyof T)[]): Partial<T> {

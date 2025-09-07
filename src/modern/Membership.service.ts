@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import {
-  getResponse,
+  GetResponse,
   Membership,
   MembershipBillingInterval,
   MembershipRequest,
@@ -67,7 +67,7 @@ export class MembershipService implements OnModuleInit {
     return { membership: newMembership, membershipPeriods };
   }
 
-  async getAllMemberships(): Promise<getResponse> {
+  async getAllMemberships(): Promise<GetResponse> {
     const rows = [];
     for (const membership of this.memberships) {
       const periods = this.membershipPeriods.filter(
