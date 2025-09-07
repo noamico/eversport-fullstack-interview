@@ -21,10 +21,6 @@ export class MembershipService implements OnModuleInit {
   private memberships: Membership[] = [];
   private membershipPeriods: MembershipPeriod[] = [];
 
-  constructor() {
-    console.log('MembershipService constructor called');
-  }
-
   async onModuleInit() {
     await this.loadData();
   }
