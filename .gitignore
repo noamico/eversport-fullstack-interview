@@ -4,3 +4,5 @@ __snapshots__/
 node_modules/
 
 .idea/
+coverage/
+package-lock.json

@@ -7,41 +7,28 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import {
-  Membership,
+  getResponse,
   MembershipBillingInterval,
   MembershipPaymentMethod,
   MembershipRequest,
+  PostResponse,
 } from '../types/Membership';
-import { MembershipPeriod } from '../types/MembershipPeriod';
 import { MembershipService } from './Membership.service';
 
-export type postResponse = {
-  membership: Membership;
-  membershipPeriods: MembershipPeriod[];
-};
-
-export type getResponse = {
-  membership: Membership;
-  periods: MembershipPeriod[];
-}[];
-
-//TODO: better if the types would be the same (same name for "membershipPeriods" / "periods"),
-// but it has to be exactly the same as the legacy
-
-@Controller('membership')
+@Controller('memberships')
 export class MembershipController {
-  constructor(private readonly membershipService: MembershipService) {}
+  constructor(private membershipService: MembershipService) {}
 
-  @Post('/')
+  @Post()
   async createNewMembership(
     @Body(new ValidationPipe()) membershipToCreate: MembershipRequest,
-  ): Promise<postResponse> {
+  ): Promise<PostResponse> {
     this.validateMembershipData(membershipToCreate);
 
     return await this.membershipService.addMembership(membershipToCreate);
   }
 
-  @Get('/')
+  @Get()
   async getMemberships(): Promise<getResponse> {
     return await this.membershipService.getAllMemberships();
   }
