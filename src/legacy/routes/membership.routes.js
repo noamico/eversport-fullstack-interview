@@ -116,7 +116,7 @@ router.get('/', (req, res) => {
   const rows = [];
   for (const membership of memberships) {
     const periods = membershipPeriods.filter(
-      (p) => p.membershipId === membership.id,
+      (p) => p.membership === membership.id,
     );
     rows.push({ membership, periods });
   }
