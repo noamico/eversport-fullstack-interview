@@ -1,3 +1,5 @@
+import { MembershipPeriod } from './MembershipPeriod';
+
 export enum MembershipState {
   PENDING = 'pending',
   ACTIVE = 'active',
@@ -29,10 +31,22 @@ export type Membership = {
   paymentMethod?: MembershipPaymentMethod;
   billingInterval: MembershipBillingInterval;
   billingPeriods: number;
-  assignedBy: string;
+  assignedBy?: string;
 };
 
 export type MembershipRequest = Omit<
   Membership,
   'id' | 'uuid' | 'validUntil' | 'state'
 >;
+
+//TODO: better if the types would be the same (same name for "membershipPeriods" / "periods"),
+// but it has to be exactly the same as the legacy
+export type PostResponse = {
+  membership: Membership;
+  membershipPeriods: MembershipPeriod[];
+};
+
+export type getResponse = {
+  membership: Membership;
+  periods: MembershipPeriod[];
+}[];

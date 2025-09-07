@@ -1,28 +1,57 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 import {
+  getResponse,
   Membership,
   MembershipBillingInterval,
   MembershipRequest,
   MembershipState,
+  PostResponse,
 } from '../types/Membership';
 import {
   MembershipPeriod,
   MembershipPeriodState,
 } from '../types/MembershipPeriod';
-import membershipsData from '../data/memberships.json';
-import membershipPeriodsData from '../data/membership-periods.json';
-import { getResponse, postResponse } from './Membership.controller';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { v4: uuidv4 } = require('uuid');
 
-const memberships = membershipsData as Membership[]; // TODO: get rid of "as"
-const membershipPeriods = membershipPeriodsData as MembershipPeriod[]; // TODO: get rid of "as"
-
 @Injectable()
-export class MembershipService {
+export class MembershipService implements OnModuleInit {
+  private memberships: Membership[] = [];
+  private membershipPeriods: MembershipPeriod[] = [];
+
+  constructor() {
+    console.log('MembershipService constructor called');
+  }
+
+  async onModuleInit() {
+    await this.loadData();
+  }
+
+  private async loadData() {
+    try {
+      const membershipsPath = join(process.cwd(), 'src/data/memberships.json');
+      const periodsPath = join(
+        process.cwd(),
+        'src/data/membership-periods.json',
+      );
+
+      const [membershipsData, periodsData] = await Promise.all([
+        readFile(membershipsPath, 'utf-8'),
+        readFile(periodsPath, 'utf-8'),
+      ]);
+
+      this.memberships = JSON.parse(membershipsData);
+      this.membershipPeriods = JSON.parse(periodsData);
+    } catch (error: any) {
+      throw new Error(`Failed to load data: ${error.message}`);
+    }
+  }
+
   async addMembership(
     membershipToCreate: MembershipRequest,
-  ): Promise<postResponse> {
+  ): Promise<PostResponse> {
     const { validFrom, validUntil } =
       this.getValidationInterval(membershipToCreate);
     const newMembership = this.createNewMembershipObj(
@@ -32,7 +61,7 @@ export class MembershipService {
     );
 
     // instead of saving in DB
-    memberships.push(newMembership);
+    this.memberships.push(newMembership);
 
     const membershipPeriods = this.getNewMembershipPeriods(
       newMembership,
@@ -44,8 +73,8 @@ export class MembershipService {
 
   async getAllMemberships(): Promise<getResponse> {
     const rows = [];
-    for (const membership of memberships) {
-      const periods = membershipPeriods.filter(
+    for (const membership of this.memberships) {
+      const periods = this.membershipPeriods.filter(
         (p) => p.membership === membership.id,
       );
       rows.push({ membership, periods });
@@ -88,13 +117,13 @@ export class MembershipService {
     }
 
     return {
-      id: memberships.length + 1,
+      id: this.memberships.length + 1,
       uuid: uuidv4() as string,
       name: membershipToCreate.name,
       state,
       validFrom: validFrom.toISOString(),
       validUntil: validUntil.toISOString(),
-      userId: membershipToCreate.userId,
+      userId: 2000,
       paymentMethod: membershipToCreate.paymentMethod,
       recurringPrice: membershipToCreate.recurringPrice,
       billingPeriods: membershipToCreate.billingPeriods,
