@@ -8,10 +8,7 @@ import {
   MembershipState,
   PostResponse,
 } from '../types/Membership';
-import {
-  MembershipPeriod,
-  MembershipPeriodState,
-} from '../types/MembershipPeriod';
+import { MembershipPeriod } from '../types/MembershipPeriod';
 import { MembershipCalculator } from '../utils/MembershipCalculator';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { v4: uuidv4 } = require('uuid');
@@ -61,7 +58,7 @@ export class MembershipService implements OnModuleInit {
     // instead of saving in DB
     this.memberships.push(newMembership);
 
-    const membershipPeriods = this.getNewMembershipPeriods(
+    const membershipPeriods = this.membershipCalculator.getNewMembershipPeriods(
       newMembership,
       validFrom,
     );
@@ -107,32 +104,5 @@ export class MembershipService implements OnModuleInit {
       billingInterval: membershipToCreate.billingInterval,
       assignedBy: membershipToCreate.assignedBy,
     };
-  }
-
-  private getNewMembershipPeriods(
-    newMembership: Membership,
-    validFrom: Date,
-  ): MembershipPeriod[] {
-    return Array.from({ length: newMembership.billingPeriods }, (_, index) => {
-      const periodStart = this.membershipCalculator.getNewPeriodIntervalItem(
-        validFrom,
-        index,
-        newMembership.billingInterval,
-      );
-      const periodEnd = this.membershipCalculator.getNewPeriodIntervalItem(
-        periodStart,
-        1,
-        newMembership.billingInterval,
-      );
-
-      return {
-        id: index + 1,
-        uuid: uuidv4(),
-        membership: newMembership.id,
-        start: periodStart.toISOString(),
-        end: periodEnd.toISOString(),
-        state: MembershipPeriodState.PLANNED,
-      };
-    });
   }
 }

@@ -1,8 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import {
+  Membership,
   MembershipBillingInterval,
   MembershipRequest,
 } from '../types/Membership';
+import {
+  MembershipPeriod,
+  MembershipPeriodState,
+} from '../types/MembershipPeriod';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { v4: uuidv4 } = require('uuid');
 
 @Injectable()
 export class MembershipCalculator {
@@ -44,5 +51,32 @@ export class MembershipCalculator {
       validUntil.setDate(validFrom.getDate() + membership.billingPeriods * 7);
     }
     return { validFrom, validUntil };
+  }
+
+  public getNewMembershipPeriods(
+    newMembership: Membership,
+    validFrom: Date,
+  ): MembershipPeriod[] {
+    return Array.from({ length: newMembership.billingPeriods }, (_, index) => {
+      const periodStart = this.getNewPeriodIntervalItem(
+        validFrom,
+        index,
+        newMembership.billingInterval,
+      );
+      const periodEnd = this.getNewPeriodIntervalItem(
+        periodStart,
+        1,
+        newMembership.billingInterval,
+      );
+
+      return {
+        id: index + 1,
+        uuid: uuidv4(),
+        membership: newMembership.id,
+        start: periodStart.toISOString(),
+        end: periodEnd.toISOString(),
+        state: MembershipPeriodState.PLANNED,
+      };
+    });
   }
 }
